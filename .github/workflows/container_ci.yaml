@@ -1,0 +1,32 @@
+name: Container CI
+
+on:
+  push:
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  build_container:
+    name: build container
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: set build env
+        run: |
+          echo "GHCR_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >>${GITHUB_ENV}
+      - name: Build and push core
+        uses: docker/build-push-action@v5
+        with:
+          file: Containerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.GHCR_OWNER }}/mm:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/mm:${{ github.ref_name }}
